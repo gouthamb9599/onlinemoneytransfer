@@ -16,9 +16,12 @@ export class Login extends Component {
     }
     check = (e) => {
         axios.post('http://localhost:5000/login', { email: this.state.email, password: this.state.password })
-            .then((result) => {
-                sessionStorage.setItem("userData", JSON.stringify(result));
-                this.props.history.push('/home')
+            .then((res) => {
+
+                if (res.data.success === true) {
+                    sessionStorage.setItem("userData", JSON.stringify(res.data.data));
+                    this.props.history.push('/home')
+                }
             });
     }
     handleChange = (e) => {
@@ -34,9 +37,10 @@ export class Login extends Component {
         };
         axios.post('http://localhost:5000/logingoogle', googleresponse)
             .then((result) => {
-                // let responseJson = result;
-                sessionStorage.setItem("userData", JSON.stringify(result));
-                this.props.history.push('/home')
+                if (result.data.success === true) {
+                    sessionStorage.setItem("userData", JSON.stringify(result.data.data));
+                    this.props.history.push('/home')
+                }
             });
     }
 

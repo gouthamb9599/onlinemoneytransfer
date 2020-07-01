@@ -9,17 +9,17 @@ const route = app => {
             (err, results) => {
                 if (err) console.log(err);
                 else {
-                    // console.log(results);
+                    console.log(results.rows[0]);
                     if (results.rowCount === 1) {
                         let token = jwt.sign({ data: google, exp: Math.floor(Date.now() / 100) + 600 * 600 },
                             "secret"
                         );
-                        // console.log(token)
-                        res.send({ success: true, token, Name: google.Name, id: results.rows[0].id });
+
+                        res.send({ success: true, token, Name: google.Name, id: results.rows[0].id, data: results.rows[0] });
                     }
                     else {
-                        client.query(`insert into accountdata(name,email,providername,image,token,password) values($1,$2,$3,$4,$5,$6) RETURNING id`,
-                            [google.Name, google.email, google.ProviderId, google.Image, google.token, password],
+                        client.query(`insert into accountdata(name,email,providername,image,token,password,cash) values($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
+                            [google.Name, google.email, google.ProviderId, google.Image, google.token, password, 5000],
                             (err, results) => {
                                 if (err) console.log(err);
                                 else {
@@ -29,7 +29,7 @@ const route = app => {
                                         "secret"
                                     );
                                     // console.log(token)
-                                    res.send({ success: true, token, Name: google.Name, id: results.rows[0].id });
+                                    res.send({ success: true, token, Name: google.Name, id: results.rows[0].id, data: results.rows[0] });
                                 }
 
                             });
@@ -49,15 +49,15 @@ const route = app => {
                     let token = jwt.sign({ data: results.rows[0], exp: Math.floor(Date.now() / 100) + 600 * 600 },
                         "secret")
                     // console.log(token);
-                    res.send({ success: true, token, Name: results.rows[0].name, id: results.rows[0].id })
+                    res.send({ success: true, token, data: results.rows[0] })
                 }
 
             })
     })
     app.post("/signup", (req, res) => {
         const data = req.body;
-        client.query(`insert into accountdata(name,email,providername,password) values($1,$2,$3,$4) RETURNING *`,
-            [data.name, data.email, data.ProviderId, data.password], (err, results) => {
+        client.query(`insert into accountdata(name,email,providername,password,cash) values($1,$2,$3,$4,$5) RETURNING *`,
+            [data.name, data.email, data.ProviderId, data.password, 5000], (err, results) => {
                 if (err) console.log(err);
                 else {
                     console.log("user data entered successfully");
@@ -65,6 +65,78 @@ const route = app => {
                 }
             })
 
+    })
+    app.post('/moneytransfer', (req, res) => {
+        const data = req.body;
+        client.query(`select id from accountdata where name=$1 or email=$1`, [data.receiver],
+            (err, results) => {
+                if (err) console.log(err);
+                else {
+                    console.log(results.rows[0]);
+                    const rid = results.rows[0].id;
+                    client.query(`insert into transaction(sender_id,receiver_id,amount) values($1,$2,$3)`, [data.senderid, rid, data.amount],
+                        (errs, result) => {
+                            if (errs) console.log(err);
+                            else {
+                                res.send({ success: true });
+                                client.query(`select cash from accountdata where id=$1`, [data.senderid],
+                                    (err1, res1) => {
+                                        if (err1) console.log(err1);
+                                        else {
+                                            console.log(res1.rows[0].cash);
+                                            var current = ((res1.rows[0].cash - 0) - (data.amount - 0));
+                                            console.log(current);
+                                            client.query(`update accountdata set cash=$1 where id=$2`, [current, data.senderid],
+                                                (erru1, resu1) => {
+                                                    if (erru1) console.log(erru1);
+                                                    else if (resu1.rowCount !== 0) {
+                                                        console.log('amount deduced');
+                                                    }
+                                                })
+
+                                        }
+                                    })
+                                client.query(`select cash from accountdata where id=$1`, [rid],
+                                    (err1, res1) => {
+                                        if (err1) console.log(err1);
+                                        else {
+                                            console.log(res1.rows[0].cash);
+                                            var current = ((res1.rows[0].cash - 0) + (data.amount - 0));
+                                            console.log('104', current);
+                                            client.query(`update accountdata set cash=$1 where id=$2`, [current, rid],
+                                                (erru1, resu1) => {
+                                                    if (erru1) console.log(erru1);
+                                                    else if (resu1.rowCount !== 0) {
+                                                        console.log('amount added');
+                                                    }
+                                                })
+
+                                        }
+                                    })
+                            }
+
+                        })
+                }
+
+            })
+    })
+    app.get('/getsent', (req, res) => {
+        const data = req.query.id;
+        client.query(`select * from transaction where sender_id=$1`, [data], (err, results) => {
+            if (err) console.log(err);
+            else {
+                res.send({ success: true, data: results.rows })
+            }
+        })
+    })
+    app.get('/getreceived', (req, res) => {
+        const data = req.query.id;
+        client.query(`select * from transaction where receiver_id=$1`, [data], (err, results) => {
+            if (err) console.log(err);
+            else {
+                res.send({ success: true, data: results.rows })
+            }
+        })
     })
 }
 module.exports = route;

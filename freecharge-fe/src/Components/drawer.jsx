@@ -19,9 +19,17 @@ import AccountBalanceWalletIcon from '@material-ui/icons/AccountBalanceWallet';
 import PaymentIcon from '@material-ui/icons/Payment';
 import AttachMoneyIcon from '@material-ui/icons/AttachMoney';
 import ExitToAppIcon from '@material-ui/icons/ExitToApp';
-import AccountCircleIcon from '@material-ui/icons/AccountCircle';
+import TextField from '@material-ui/core/TextField';
+import Collapse from '@material-ui/core/Collapse';
+import ExpandLess from '@material-ui/icons/ExpandLess';
+import ExpandMore from '@material-ui/icons/ExpandMore';
+import { InputLabel } from '@material-ui/core';
+import { Button } from '@material-ui/core';
+import '../styles/drawer.css';
+import Axios from 'axios';
+import swal from 'sweetalert';
 
-const drawerWidth = 240;
+const drawerWidth = 253;
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -71,6 +79,9 @@ const useStyles = makeStyles((theme) => ({
             width: theme.spacing(9) + 1,
         },
     },
+    nested: {
+        paddingLeft: theme.spacing(4),
+    },
     toolbar: {
         display: 'flex',
         alignItems: 'center',
@@ -85,88 +96,195 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
-export default function MiniDrawer() {
+export default function MiniDrawer(props) {
     const classes = useStyles();
     const theme = useTheme();
+    // const data = JSON.parse(localStorage.getItem('userData'));
     const [open, setOpen] = React.useState(false);
-
+    const [opennest, setOpennest] = React.useState(false);
+    const [newtrans, setNewtrans] = React.useState(false);
+    const [transhissent, setTranshissent] = React.useState(false);
+    const [transhisrec, setTranshisrec] = React.useState(false);
+    const [receivedlist, setReceivedlist] = React.useState([]);
+    const [sentlist, setSentlist] = React.useState([]);
+    const [amount, setAmount] = React.useState(0);
+    const [oamount, setOamount] = React.useState(true);
+    const [username, setUsername] = React.useState('');
+    const [name, setName] = React.useState('');
+    const [balance, setBalance] = React.useState(0);
+    const [newbalance, setnewBalance] = React.useState(0);
     const handleDrawerOpen = () => {
+        const data = JSON.parse(sessionStorage.getItem('userData'));
+        console.log(data.name, data.cash);
+        setName(data.name);
+        setBalance(data.cash)
         setOpen(true);
     };
-
+    const handleamount = (event) => {
+        setAmount(event.target.value);
+    }
+    const handleuser = (event) => {
+        setUsername(event.target.value);
+    }
+    const handlenest = () => {
+        setOpennest(!opennest);
+    }
     const handleDrawerClose = () => {
         setOpen(false);
     };
+    const maketransaction = () => {
+        setNewtrans(!newtrans)
+    }
+    const moneytransfer = () => {
+        const data = JSON.parse(sessionStorage.getItem('userData'));
+        Axios.post(`http://localhost:5000/moneytransfer`, { senderid: data.id, amount: amount, receiver: username })
+            .then(res => {
+                if (res.data.success === true) {
+                    swal("Money Transferred Successfully", "It will take time to reflect in your account", "success")
+                    setBalance((balance - 0) - (amount - 0));
+                    console.log(balance, amount)
+                    setOamount(false);
+                }
+                else if (res.data.success === false) {
+                    swal("Invalid user Details", "Check the user details", "warning")
+                }
+            })
+    }
+    const received = () => {
+        const data = JSON.parse(sessionStorage.getItem('userData'));
+        Axios.get(`http://localhost:5000/getreceived?id=${data.id}`)
+            .then(res => {
+                if (res.data.success === true) {
+                    console.log(res.data.data);
+                    setReceivedlist(res.data.data);
+                    setTranshisrec(!transhisrec);
+                }
+            })
+    }
+    const sent = () => {
+        const data = JSON.parse(sessionStorage.getItem('userData'));
+        Axios.get(`http://localhost:5000/getsent?id=${data.id}`)
+            .then(res => {
+                if (res.data.success === true) {
+                    console.log(res.data.data);
+                    setSentlist(res.data.data);
+                    setTranshissent(!transhissent);
+                }
+            })
+    }
 
     return (
-        <div className={classes.root} style={{ backgroundColor: '#e3714d' }}>
-            <CssBaseline />
-            <AppBar
-                position="fixed"
-                className={clsx(classes.appBar, {
-                    [classes.appBarShift]: open,
-                })}
-                style={{ backgroundColor: '#e3714d' }}
-            >
-                <Toolbar>
-                    <IconButton
-                        color="inherit"
-                        aria-label="open drawer"
-                        onClick={handleDrawerOpen}
-                        edge="start"
-                        className={clsx(classes.menuButton, {
-                            [classes.hide]: open,
-                        })}
-                    >
-                        <MenuIcon />
-                    </IconButton>
-                    <Typography variant="h6" noWrap>
-                        Free Charge
+        <div>
+            <div className={classes.root} >
+                <CssBaseline />
+                <AppBar
+                    position="fixed"
+                    className={clsx(classes.appBar, {
+                        [classes.appBarShift]: open,
+                    })}
+                    style={{ backgroundColor: '#e3714d' }}
+                >
+                    <Toolbar>
+                        <IconButton
+                            color="inherit"
+                            aria-label="open drawer"
+                            onClick={handleDrawerOpen}
+                            edge="start"
+                            className={clsx(classes.menuButton, {
+                                [classes.hide]: open,
+                            })}
+                        >
+                            <MenuIcon />
+                        </IconButton>
+                        <Typography variant="h6" noWrap>
+                            Free Charge
           </Typography>
 
-                </Toolbar>
-            </AppBar>
-            <Drawer
-                variant="permanent"
-                className={clsx(classes.drawer, {
-                    [classes.drawerOpen]: open,
-                    [classes.drawerClose]: !open,
-                })}
-                classes={{
-                    paper: clsx({
+                    </Toolbar>
+                </AppBar>
+                <Drawer
+                    variant="permanent"
+                    className={clsx(classes.drawer, {
                         [classes.drawerOpen]: open,
                         [classes.drawerClose]: !open,
-                    }),
-                }}
-            >
-                <div className={classes.toolbar}>
-                    <AccountCircleIcon />
-                    <span>Hello user</span>
-                    <IconButton onClick={handleDrawerClose}>
-                        {theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-                    </IconButton>
-                </div>
-                <Divider />
-                <List>
-                    <ListItem button key={'Make Transaction'}>
-                        <ListItemIcon><AttachMoneyIcon /></ListItemIcon>
-                        <ListItemText primary={'Make Transaction'} />
-                    </ListItem>
-                    <ListItem button key={'Transaction History'}>
-                        <ListItemIcon><PaymentIcon /></ListItemIcon>
-                        <ListItemText primary={'Transaction History'} />
-                    </ListItem>
-                    <ListItem button key={'Account Balance'}>
-                        <ListItemIcon><AccountBalanceWalletIcon /></ListItemIcon>
-                        <ListItemText primary={'Account Balance'} />
-                    </ListItem>
+                    })}
+                    classes={{
+                        paper: clsx({
+                            [classes.drawerOpen]: open,
+                            [classes.drawerClose]: !open,
+                        }),
+                    }}
+                >
+                    <div className={classes.toolbar} >
+                        <div className="userinfo" >
+                            <span>Hello {name}</span>
+                            {oamount ? <span>Account Balance:${balance}</span> : <span>Account Balance:${balance}</span>}
+                        </div>
+                        <IconButton onClick={handleDrawerClose}>
+                            {theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+                        </IconButton>
+                    </div>
                     <Divider />
-                    <ListItem button key={'Logout'}>
-                        <ListItemIcon><ExitToAppIcon /></ListItemIcon>
-                        <ListItemText primary={'Logout'} />
-                    </ListItem>
-                </List>
-            </Drawer>
-        </div>
+                    <List>
+                        <ListItem button onClick={maketransaction} key={'Make Transaction'}>
+                            <ListItemIcon><AttachMoneyIcon /></ListItemIcon>
+                            <ListItemText primary={'Make Transaction'} />
+                        </ListItem>
+                        <ListItem button onClick={handlenest} key={'Transaction History'}>
+                            <ListItemIcon><PaymentIcon /></ListItemIcon>
+                            <ListItemText primary={'Transaction History'} />
+                            {opennest ? <ExpandLess /> : <ExpandMore />}
+                        </ListItem>
+                        <Collapse in={opennest} timeout="auto" unmountOnExit>
+                            <List component="div" disablePadding>
+                                <ListItem button onClick={sent} className={classes.nested}>
+                                    <ListItemText primary="Sent" />
+                                </ListItem>
+                                <ListItem button onClick={received} className={classes.nested}>
+                                    <ListItemText primary="Recieved" />
+                                </ListItem>
+                            </List>
+                        </Collapse>
+                        <Divider />
+                        <ListItem onClick={props.logout} button key={'Logout'}>
+                            <ListItemIcon><ExitToAppIcon /></ListItemIcon>
+                            <ListItemText primary={'Logout'} />
+                        </ListItem>
+                    </List>
+                </Drawer>
+            </div >
+            <div>
+                {newtrans ? <div className="maketrans"><InputLabel>Money Transfer</InputLabel>
+                    <div><TextField id="standard-basic" value={username} onChange={handleuser} type="text" label="User Details" placeholder="Name/Email" /></div>
+                    <div><TextField id="standard-basic" value={amount} onChange={handleamount} min="1" max="5000" type="number" label="Amount" placeholder="Amount" /></div>
+                    <Button variant="contained" onClick={moneytransfer} style={{ backgroundColor: "#e3714d", marginTop: "9px" }}>Transfer</Button></div> : <></>}
+            </div>
+            <div>
+                {transhissent ? <table id='customers'>
+                    <tr>
+                        <th>Sent Amount</th>
+                        <th>Reciever</th>
+                    </tr>
+                    {sentlist.map(data => (<tr>
+                        <td>{data.sender_id}</td>
+                        <td>{data.amount}</td>
+                    </tr>))}
+
+                </table> : <></>}
+                {transhisrec ? <table id='customers'>
+                    <tr>
+                        <th>Received Amount</th>
+                        <th>Sender</th>
+
+                    </tr>
+                    {receivedlist.map(data => (<tr>
+                        <td>{data.sender_id}</td>
+                        <td>{data.amount}</td>
+
+                    </tr>))}
+                </table> : <></>}
+
+            </div>
+        </div >
     );
 }
