@@ -25,6 +25,11 @@ import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import { InputLabel } from '@material-ui/core';
 import { Button } from '@material-ui/core';
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogTitle from '@material-ui/core/DialogTitle';
 import '../styles/drawer.css';
 import Axios from 'axios';
 import swal from 'sweetalert';
@@ -113,7 +118,31 @@ export default function MiniDrawer(props) {
     const [name, setName] = React.useState('');
     const [balance, setBalance] = React.useState(0);
     const [newbalance, setnewBalance] = React.useState(0);
+    const [opendailog, setOpendailog] = React.useState(false);
+    const [cashuser, setCashuser] = React.useState(0);
+    const [cashid, setCashid] = React.useState('');
 
+    const changemoney = (id, cash) => {
+        setCashuser(cash);
+        setCashid(id);
+        setOpendailog(true);
+
+    };
+    const handleClosedailog = () => {
+        setOpendailog(false);
+    };
+    const handlecash = (event) => {
+        setCashuser(event.target.value)
+    }
+    const handlemoneychange = () => {
+        Axios.post(`http://localhost:5000/changebasemoney`, { user: cashid, amount: cashuser })
+            .then(res => {
+                if (res.data.success === true) {
+                    swal(" Base Money Changed Successfully", "It will reflect in user's account", "success")
+                    setOpendailog(false);
+                }
+            })
+    }
     const handleDrawerOpen = () => {
         if (props.isadmin === false) {
             const data = JSON.parse(sessionStorage.getItem('userData'));
@@ -293,7 +322,7 @@ export default function MiniDrawer(props) {
                         <td>{data.email}</td>
                         <td>{data.providername}</td>
                         <td>{data.cash}</td>
-                        <td><Button style={{ backgroundColor: "#e3714d" }}>Change Amount</Button></td>
+                        <td><Button onClick={() => changemoney(data.name, data.cash)} style={{ backgroundColor: "#e3714d" }}>Change Amount</Button></td>
                     </tr>))}
 
                 </table> : <></>}
@@ -313,6 +342,32 @@ export default function MiniDrawer(props) {
                         <td><Button onClick={() => canceltransaction(data.id, data.sender_id, data.receiver_id, data.amount)} style={{ backgroundColor: "#e3714d" }}>Cancel</Button></td>
                     </tr>))}
                 </table> : <></>}
+                <Dialog open={opendailog} onClose={handleClosedailog} aria-labelledby="form-dialog-title">
+                    <DialogTitle id="form-dialog-title">Alter Base Amount</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText>
+                            change the virtual cash of user:${cashid}
+                        </DialogContentText>
+                        <TextField
+                            margin="dense"
+                            id="name"
+                            label="Email Address"
+                            type="number"
+                            min="0"
+                            max="10000"
+                            value={cashuser}
+                            onChange={handlecash}
+                        />
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleClosedailog} color="primary">
+                            Cancel
+          </Button>
+                        <Button onClick={handlemoneychange} color="primary">
+                            Change
+          </Button>
+                    </DialogActions>
+                </Dialog> :
 
             </div>
         </div>

@@ -58,6 +58,17 @@ const route = app => {
 
             })
     })
+    app.post('/changebasemoney', (req, res) => {
+        const data = req.body;
+        client.query(`update accountdata set cash=$1 where name=$2`, [data.amount, data.user], (err, result) => {
+            if (err) console.log(err);
+            else {
+                if (result.rowCount !== 0) {
+                    res.send({ success: true });
+                }
+            }
+        })
+    })
     app.post('/canceltransaction', (req, res) => {
         const data = req.body;
         client.query(`delete from transaction where id=$1`, [data.id],
