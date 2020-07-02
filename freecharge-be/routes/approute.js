@@ -45,17 +45,64 @@ const route = app => {
             (err, results) => {
                 if (err) console.log(err);
                 else {
-                    console.log('access successful')
-                    // console.log(results.rows[0])
-                    let token = jwt.sign({ data: results.rows[0], exp: Math.floor(Date.now() / 100) + 600 * 600 },
-                        "secret")
-                    // console.log(token);
-                    res.send({ success: true, token, data: results.rows[0] })
+                    console.log(results);
+                    if (results.rowCount !== 0) {
+                        console.log('access successful')
+                        console.log(results.rows[0])
+                        let token = jwt.sign({ data: results.rows[0], exp: Math.floor(Date.now() / 100) + 600 * 600 },
+                            "secret")
+                        // console.log(token);
+                        res.send({ success: true, token, data: results.rows[0] })
+                    }
                 }
 
             })
     })
     app.post('/canceltransaction', (req, res) => {
+        const data = req.body;
+        client.query(`delete from transaction where id=$1`, [data.id],
+            (err1, res1) => {
+                if (err1) console.log(err1);
+                else {
+                    if (res1.rowCount !== 0) {
+                        client.query(`select cash from accountdata where id=$1`, [data.sender],
+                            (err2, res2) => {
+                                if (err2) console.log(err2)
+                                else {
+                                    const money = ((res2.rows[0].cash - 0) + (data.amount - 0));
+                                    client.query(`update accountdata set cash=$1 where id=$2`, [money, data.sender],
+                                        (err, result) => {
+                                            if (err) console.log(err);
+                                            else {
+                                                if (result.rowCount !== 0) {
+                                                    console.log('deduced amount added back')
+                                                }
+                                            }
+                                        })
+
+                                }
+                            })
+                        client.query(`select cash from accountdata where id=$1`, [data.receiver],
+                            (err2, res2) => {
+                                if (err2) console.log(err2)
+                                else {
+                                    const money = ((res2.rows[0].cash - 0) - (data.amount - 0));
+                                    client.query(`update accountdata set cash=$1 where id=$2`, [money, data.receiver],
+                                        (err, result) => {
+                                            if (err) console.log(err);
+                                            else {
+                                                if (result.rowCount !== 0) {
+                                                    console.log('added amount deduced back')
+                                                }
+                                            }
+                                        })
+
+                                }
+                            })
+                        res.send({ success: true })
+                    }
+                }
+            })
 
     })
     app.get('/adminallhistory', (req, res) => {

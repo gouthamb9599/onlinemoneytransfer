@@ -112,6 +112,8 @@ export default function MiniDrawer(props) {
     const [username, setUsername] = React.useState('');
     const [name, setName] = React.useState('');
     const [balance, setBalance] = React.useState(0);
+    const [newbalance, setnewBalance] = React.useState(0);
+
     const handleDrawerOpen = () => {
         if (props.isadmin === false) {
             const data = JSON.parse(sessionStorage.getItem('userData'));
@@ -139,14 +141,7 @@ export default function MiniDrawer(props) {
     const maketransaction = () => {
         setNewtrans(!newtrans)
     }
-    const canceltransaction = (id) => {
-        Axios.post(`http://localhost:5000/canceltransaction`, { id: id })
-            .then(res => {
-                if (res.data.success === true) {
-                    swal('transaction cancelled successfully', 'check other transactions for validation', 'success')
-                }
-            })
-    }
+
     const allhistory = () => {
         Axios.get(`http://localhost:5000/adminallhistory`)
             .then(res => {
@@ -171,9 +166,12 @@ export default function MiniDrawer(props) {
             .then(res => {
                 if (res.data.success === true) {
                     swal("Money Transferred Successfully", "It will take time to reflect in your account", "success")
-                    setBalance((balance - 0) - (amount - 0));
-                    console.log(balance, amount)
                     setOamount(false);
+                    console.log(balance, amount)
+                    setnewBalance((balance) - (amount - 0));
+                    setBalance((balance) - (amount - 0));
+                    console.log(balance, amount)
+
                 }
                 else if (res.data.success === false) {
                     swal("Invalid user Details", "Check the user details", "warning")
@@ -199,6 +197,14 @@ export default function MiniDrawer(props) {
                     console.log(res.data.data);
                     setSentlist(res.data.data);
                     setTranshissent(!transhissent);
+                }
+            })
+    }
+    const canceltransaction = (id, sender, receiver, amount) => {
+        Axios.post(`http://localhost:5000/canceltransaction`, { id: id, sender: sender, receiver: receiver, amount: amount })
+            .then(res => {
+                if (res.data.success === true) {
+                    swal('transaction cancelled successfully', 'check other transactions for validation', 'success')
                 }
             })
     }
@@ -304,7 +310,7 @@ export default function MiniDrawer(props) {
                         <td>{data.sender_id}</td>
                         <td>{data.receiver_id}</td>
                         <td>{data.amount}</td>
-                        <td><Button onClick={canceltransaction(data.id)} style={{ backgroundColor: "#e3714d" }}>Cancel</Button></td>
+                        <td><Button onClick={() => canceltransaction(data.id, data.sender_id, data.receiver_id, data.amount)} style={{ backgroundColor: "#e3714d" }}>Cancel</Button></td>
                     </tr>))}
                 </table> : <></>}
 
@@ -355,7 +361,7 @@ export default function MiniDrawer(props) {
                         <div className={classes.toolbar} >
                             <div className="userinfo" >
                                 <span>Hello {name}</span>
-                                {oamount ? <span>Account Balance:${balance}</span> : <span>Account Balance:${balance}</span>}
+                                {oamount ? <span>Account Balance:${balance}</span> : <span>Account Balance:${newbalance}</span>}
                             </div>
                             <IconButton onClick={handleDrawerClose}>
                                 {theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}

@@ -17,10 +17,9 @@ export class Login extends Component {
     check = (e) => {
         axios.post('http://localhost:5000/login', { email: this.state.email, password: this.state.password })
             .then((res) => {
-
                 if (res.data.success === true) {
                     const data = res.data.data;
-
+                    console.log(data);
                     if (data.isadmin === true) {
                         sessionStorage.setItem("adminData", JSON.stringify(res.data.data));
                         this.props.history.push('/admin')
