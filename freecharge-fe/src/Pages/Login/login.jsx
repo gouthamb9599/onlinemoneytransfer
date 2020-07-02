@@ -19,8 +19,17 @@ export class Login extends Component {
             .then((res) => {
 
                 if (res.data.success === true) {
-                    sessionStorage.setItem("userData", JSON.stringify(res.data.data));
-                    this.props.history.push('/home')
+                    const data = res.data.data;
+
+                    if (data.isadmin === true) {
+                        sessionStorage.setItem("adminData", JSON.stringify(res.data.data));
+                        this.props.history.push('/admin')
+                    }
+                    else if (data.isadmin === false) {
+                        sessionStorage.setItem("userData", JSON.stringify(res.data.data));
+                        this.props.history.push('/home');
+
+                    }
                 }
             });
     }

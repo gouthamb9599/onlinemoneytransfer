@@ -14,7 +14,7 @@
 #customers {
     font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
     border-collapse: collapse;
-    width: 100%;
+    width: 60%;
     margin-left: 100px;
     margin-top: 100px;
   }
@@ -29,8 +29,8 @@
   #customers tr:hover {background-color: #ddd;}
   
   #customers th {
-    padding-top: 12px;
-    padding-bottom: 12px;
+    padding-top: 3px;
+    padding-bottom: 3px;
     text-align: left;
     background-color: #e3714d;
     color: white;

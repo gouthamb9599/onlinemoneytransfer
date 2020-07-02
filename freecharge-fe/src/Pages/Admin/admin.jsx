@@ -1,16 +1,16 @@
 import React from 'react';
 import Drawer from '../../Components/drawer';
-class Homepage extends React.Component {
+class Admin extends React.Component {
     logout = () => {
         this.props.history.push('/');
-        sessionStorage.removeItem('userData')
+        sessionStorage.removeItem('adminData')
     }
     render() {
         return (
             <div>
-                <Drawer isadmin={false} logout={this.logout}></Drawer>
+                <Drawer isadmin={true} logout={this.logout}></Drawer>
             </div>
         )
     }
 }
-export default Homepage;
+export default Admin;

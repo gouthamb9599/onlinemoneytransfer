@@ -1,6 +1,7 @@
 const client = require('../config/database')
 const jwt = require('jsonwebtoken')
 const route = app => {
+
     app.post("/logingoogle", (req, res) => {
         console.log(req.body)
         const google = req.body;
@@ -54,6 +55,29 @@ const route = app => {
 
             })
     })
+    app.post('/canceltransaction', (req, res) => {
+
+    })
+    app.get('/adminallhistory', (req, res) => {
+        client.query(`select * from transaction order by id asc `, (err, results) => {
+            if (err) console.log(err);
+            else {
+                if (results.rowCount !== 0) {
+                    res.send({ success: true, data: results.rows })
+                }
+            }
+        })
+    })
+    app.get('/adminuserdata', (req, res) => {
+        client.query(`select * from accountdata where isadmin='false' order by id asc`, (err, results) => {
+            if (err) console.log(err);
+            else {
+                if (results.rowCount !== 0) {
+                    res.send({ success: true, data: results.rows })
+                }
+            }
+        })
+    })
     app.post("/signup", (req, res) => {
         const data = req.body;
         client.query(`insert into accountdata(name,email,providername,password,cash) values($1,$2,$3,$4,$5) RETURNING *`,
@@ -66,6 +90,18 @@ const route = app => {
             })
 
     })
+    /*  admin creation script*/
+    app.get('/', (req, res) => {
+        client.query(`insert into accountdata(name,email,providername,password,isadmin) values($1,$2,$3,$4,$5) RETURNING *`,
+            ['admin', 'admin@gmail.com', 'admin', 'admin', true], (err, results) => {
+                if (err) console.log(err);
+                else {
+                    if (results.rowCount !== 0) {
+                        console.log('admin account created')
+                    }
+                }
+            })
+    });
     app.post('/moneytransfer', (req, res) => {
         const data = req.body;
         client.query(`select id from accountdata where name=$1 or email=$1`, [data.receiver],
